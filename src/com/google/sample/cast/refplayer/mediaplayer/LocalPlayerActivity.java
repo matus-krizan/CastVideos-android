@@ -16,17 +16,6 @@
 
 package com.google.sample.cast.refplayer.mediaplayer;
 
-import com.google.android.gms.cast.ApplicationMetadata;
-import com.google.android.gms.cast.MediaInfo;
-import com.google.android.gms.cast.MediaMetadata;
-import com.google.sample.cast.refplayer.CastApplication;
-import com.google.sample.cast.refplayer.R;
-import com.google.sample.cast.refplayer.settings.CastPreference;
-import com.google.sample.cast.refplayer.utils.Utils;
-import com.google.sample.castcompanionlibrary.cast.VideoCastManager;
-import com.google.sample.castcompanionlibrary.cast.callbacks.VideoCastConsumerImpl;
-import com.google.sample.castcompanionlibrary.widgets.MiniController;
-
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.res.Configuration;
@@ -60,6 +49,16 @@ import android.widget.TextView;
 import android.widget.VideoView;
 
 import com.androidquery.AQuery;
+import com.google.android.gms.cast.ApplicationMetadata;
+import com.google.android.gms.cast.MediaInfo;
+import com.google.android.gms.cast.MediaMetadata;
+import com.google.sample.cast.refplayer.CastApplication;
+import com.google.sample.cast.refplayer.R;
+import com.google.sample.cast.refplayer.settings.CastPreference;
+import com.google.sample.cast.refplayer.utils.Utils;
+import com.google.sample.castcompanionlibrary.cast.VideoCastManager;
+import com.google.sample.castcompanionlibrary.cast.callbacks.VideoCastConsumerImpl;
+import com.google.sample.castcompanionlibrary.widgets.MiniController;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -95,6 +94,9 @@ public class LocalPlayerActivity extends ActionBarActivity {
     protected MediaInfo mRemoteMediaInformation;
     private VideoCastConsumerImpl mCastConsumer;
     private TextView mAuthorView;
+    private boolean isVideoPausedOnonPause;
+    private int onPausedVideoProgress;
+
 
     /*
      * indicates whether we are doing a local or a remote playback
@@ -278,6 +280,11 @@ public class LocalPlayerActivity extends ActionBarActivity {
             case PAUSED:
                 switch (mLocation) {
                     case LOCAL:
+                        if(isVideoPausedOnonPause){
+                            mVideoView.seekTo(onPausedVideoProgress);
+                            onPausedVideoProgress=0;
+                            isVideoPausedOnonPause=false;
+                        }
                         mVideoView.start();
                         if (!mCastManager.isConnecting() ) {
                             Log.d(TAG, "Playing locally...");
@@ -397,6 +404,9 @@ public class LocalPlayerActivity extends ActionBarActivity {
             // since we are playing locally, we need to stop the playback of
             // video (if user is not watching, pause it!)
             mVideoView.pause();
+            // remember the position where we paused it in case activity gets stopped
+            onPausedVideoProgress = mVideoView.getCurrentPosition();
+            isVideoPausedOnonPause = true;
             mPlaybackState = PlaybackState.PAUSED;
             updatePlayButton(PlaybackState.PAUSED);
         }
