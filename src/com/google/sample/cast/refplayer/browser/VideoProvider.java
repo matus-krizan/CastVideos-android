@@ -16,13 +16,17 @@
 
 package com.google.sample.cast.refplayer.browser;
 
+import android.net.Uri;
+import android.util.Log;
+
 import com.google.android.gms.cast.MediaInfo;
 import com.google.android.gms.cast.MediaMetadata;
 import com.google.android.gms.cast.MediaTrack;
 import com.google.android.gms.common.images.WebImage;
 
-import android.net.Uri;
-import android.util.Log;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -32,10 +36,6 @@ import java.io.InputStreamReader;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 public class VideoProvider {
 
@@ -133,7 +133,7 @@ public class VideoProvider {
                                 }
                             }
                         }
-
+//tuto je chyba, studio a subTitle su vymenene
                         mediaList.add(buildMediaInfo(title, studio, subTitle, videoUrl, imageurl,
                                 bigImageurl, tracks));
                     }
@@ -141,6 +141,17 @@ public class VideoProvider {
             }
         }
         return mediaList;
+    }
+
+    public static MediaInfo getMediaInfoFromUrl(String mediaURL) {
+        for (MediaInfo hladaj : mediaList) {
+            if (hladaj.getContentId().equals(mediaURL)) {
+                Log.d("TESTES", "URL String received from Cast is in our JSON");
+                return hladaj;
+            }
+        }
+
+        return null;
     }
 
     private static MediaInfo buildMediaInfo(String title, String subTitle, String studio,

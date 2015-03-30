@@ -16,11 +16,12 @@
 
 package com.google.sample.cast.refplayer;
 
+import android.app.Application;
+
+import com.google.android.gms.cast.CastMediaControlIntent;
 import com.google.sample.cast.refplayer.settings.CastPreference;
 import com.google.sample.castcompanionlibrary.cast.VideoCastManager;
 import com.google.sample.castcompanionlibrary.utils.Utils;
-
-import android.app.Application;
 
 /**
  * The {@link Application} for this demo application.
@@ -37,7 +38,8 @@ public class CastApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        sApplicationId = getString(R.string.app_id);
+//        sApplicationId = getString(R.string.app_id);
+        sApplicationId = CastMediaControlIntent.DEFAULT_MEDIA_RECEIVER_APPLICATION_ID;
         initializeCastManager();
         Utils.saveFloatToPreference(getApplicationContext(),
                 VideoCastManager.PREFS_KEY_VOLUME_INCREMENT, (float) VOLUME_INCREMENT);

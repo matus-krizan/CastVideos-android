@@ -16,13 +16,8 @@
 
 package com.google.sample.cast.refplayer;
 
-import com.google.sample.cast.refplayer.settings.CastPreference;
-import com.google.sample.castcompanionlibrary.cast.VideoCastManager;
-import com.google.sample.castcompanionlibrary.cast.callbacks.IVideoCastConsumer;
-import com.google.sample.castcompanionlibrary.cast.callbacks.VideoCastConsumerImpl;
-import com.google.sample.castcompanionlibrary.widgets.MiniController;
-
 import android.annotation.TargetApi;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -39,6 +34,17 @@ import android.view.View;
 
 import com.github.amlcurran.showcaseview.ShowcaseView;
 import com.github.amlcurran.showcaseview.targets.ViewTarget;
+import com.google.android.gms.cast.MediaInfo;
+import com.google.sample.cast.refplayer.browser.VideoProvider;
+import com.google.sample.cast.refplayer.mediaplayer.LocalPlayerActivity;
+import com.google.sample.cast.refplayer.settings.CastPreference;
+import com.google.sample.castcompanionlibrary.cast.VideoCastManager;
+import com.google.sample.castcompanionlibrary.cast.callbacks.IVideoCastConsumer;
+import com.google.sample.castcompanionlibrary.cast.callbacks.VideoCastConsumerImpl;
+import com.google.sample.castcompanionlibrary.cast.exceptions.NoConnectionException;
+import com.google.sample.castcompanionlibrary.cast.exceptions.TransientNetworkDisconnectionException;
+import com.google.sample.castcompanionlibrary.utils.Utils;
+import com.google.sample.castcompanionlibrary.widgets.MiniController;
 
 public class VideoBrowserActivity extends ActionBarActivity {
 
@@ -49,6 +55,9 @@ public class VideoBrowserActivity extends ActionBarActivity {
     private MenuItem mediaRouteMenuItem;
     boolean mIsHoneyCombOrAbove = Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB;
     private Toolbar mToolbar;
+    private String mMovieUrlfromCast = null;
+    private Context mContext = this;
+    private Long lastCastPosition = null;
 
     /*
      * (non-Javadoc)
@@ -108,6 +117,33 @@ public class VideoBrowserActivity extends ActionBarActivity {
             @Override
             public void onReconnectionStatusChanged(int status) {
                 Log.d(TAG, "onReconnectionStatusChanged(): " + status);
+            }
+
+            @Override
+            public void onRemoteMediaPlayerStatusUpdated() {
+                try {
+                    mMovieUrlfromCast = mCastManager.getRemoteMovieUrl();
+                    lastCastPosition = mCastManager.getCurrentMediaPosition();
+                } catch (TransientNetworkDisconnectionException e) {
+                    e.printStackTrace();
+                } catch (NoConnectionException e) {
+                    e.printStackTrace();
+                }
+                Log.d("TEST", "onRemoteMediaPlayerStatusUpdated was called");
+            }
+
+            @Override
+            public void onDisconnected() {
+                super.onDisconnected();
+                Intent intent = new Intent(mContext, LocalPlayerActivity.class);
+                MediaInfo urlFromCastDisconnect = null;
+                Log.d("TEST", "mCastConsumer.onDisconnected() was called");
+                if ((urlFromCastDisconnect = VideoProvider.getMediaInfoFromUrl(mMovieUrlfromCast)) != null){
+                    intent.putExtra("media", Utils.fromMediaInfo(urlFromCastDisconnect));
+                    intent.putExtra("shouldStart", true);
+                    intent.putExtra("startPosition", lastCastPosition.intValue());
+                    mContext.startActivity(intent);
+                };
             }
         };
 
@@ -173,14 +209,15 @@ public class VideoBrowserActivity extends ActionBarActivity {
         mCastManager = CastApplication.getCastManager();
         mCastManager.addVideoCastConsumer(mCastConsumer);
         mCastManager.incrementUiCounter();
-
         super.onResume();
     }
 
     @Override
     protected void onPause() {
         mCastManager.decrementUiCounter();
-        mCastManager.removeVideoCastConsumer(mCastConsumer);
+        //presuvam removeVideoCastConsumer do onDestroy
+        //mCastManager.removeVideoCastConsumer(mCastConsumer);
+        Log.d(TAG, "onPause is called incl. removeVideoCastConsumer");
         super.onPause();
     }
 
@@ -191,6 +228,7 @@ public class VideoBrowserActivity extends ActionBarActivity {
             mMini.removeOnMiniControllerChangedListener(mCastManager);
             mCastManager.removeMiniController(mMini);
             mCastManager.clearContext(this);
+            mCastManager.removeVideoCastConsumer(mCastConsumer);
         }
         super.onDestroy();
     }

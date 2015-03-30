@@ -173,7 +173,8 @@ public class LocalPlayerActivity extends ActionBarActivity {
                         mVideoView.pause();
                         try {
                             loadRemoteMedia(mSeekbar.getProgress(), true);
-                            finish();
+                            //do not destroy this activity after sending video to Chromecast please
+                            //finish();
                         } catch (Exception e) {
                             Utils.handleException(LocalPlayerActivity.this, e);
                         }
@@ -200,6 +201,7 @@ public class LocalPlayerActivity extends ActionBarActivity {
             public void onRemoteMediaPlayerMetadataUpdated() {
                 try {
                     mRemoteMediaInformation = mCastManager.getRemoteMediaInformation();
+                    Log.d(TAG, "TEST mRemoteMediaInformation.getContentId = " + mRemoteMediaInformation.getContentId() );
                 } catch (Exception e) {
                     // silent
                 }
